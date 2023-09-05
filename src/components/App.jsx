@@ -16,6 +16,8 @@ export class App extends Component {
     searchQuery: '',
     page: 1,
     isLoading: false,
+    loadedPhotos: 0,
+    maxPhotos: 0,
   };
 
   // получаем велью инпута, которое записываем в state
@@ -32,7 +34,7 @@ export class App extends Component {
     });
   };
 
-  // основной запрос на сервер
+  // основной запрос на сервер делаем в componentDidUpdate
   async componentDidUpdate(prevProps, prevState) {
     // проверка на новые данные
     if (
@@ -45,19 +47,29 @@ export class App extends Component {
       // реализация отображения загрузки
       this.setState({ isLoading: true });
 
-      // запрос на сервер
-      const images = await fetchImages(searchQuery, this.state.page);
+      // запрос на сервер и сразу деструктуризируем объект
+      const { totalHits, hits } = await fetchImages(
+        searchQuery,
+        this.state.page
+      );
 
       // меняем state
       this.setState(prevState => {
         // если page равен 1 -> полностью меняем старый массив на новый массив (для новых запросов)
         if (prevState.page === 1) {
-          return { data: images, isLoading: false };
+          return {
+            data: hits,
+            isLoading: false,
+            loadedPhotos: hits.length,
+            maxPhotos: totalHits,
+          };
         }
+
         // если page больше 1 -> создаем массив, в который распыляем старый массив и распыляем новый массив (для кнопки LoadMore)
         return {
-          data: [...prevState.data, ...images],
+          data: [...prevState.data, ...hits],
           isLoading: false,
+          loadedPhotos: prevState.loadedPhotos + hits.length,
         };
       });
     }
@@ -65,11 +77,14 @@ export class App extends Component {
 
   // запрос за следующей страничкой
   newPage = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
   };
 
   render() {
-    const { data, isLoading } = this.state;
+    // деструктуризируем state перед использованием
+    const { data, isLoading, loadedPhotos, maxPhotos } = this.state;
 
     return (
       <>
@@ -88,10 +103,12 @@ export class App extends Component {
           />
         ) : (
           // если isLoading: false --> рендерим галерею
-          <ImageGallery images={data}/>
+          <ImageGallery images={data} />
         )}
-        {/* рендер кнопки если массив не пустой */}
-        {data.length !== 0 ? <LoadMoreButton loadMore={this.newPage} /> : null}
+        {/* прячем кнопку LoadMore если массив пустой или загружено максимум фото*/}
+        {data.length === 0 || loadedPhotos === maxPhotos ? null : (
+          <LoadMoreButton loadMore={this.newPage} />
+        )}
       </>
     );
   }

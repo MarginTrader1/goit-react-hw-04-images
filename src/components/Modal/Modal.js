@@ -1,7 +1,7 @@
 // импорт библиотеки для модального окна
 import Modal from 'react-modal';
 
-// копмонент для модалки
+// компонент для модалки
 export const ModalWindow = ({
   largeImageURL,
   modalStyle,
