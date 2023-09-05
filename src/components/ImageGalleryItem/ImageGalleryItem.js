@@ -33,9 +33,10 @@ export const ImageGalleryItem = ({
   // создаем хук
   const [isModalOpen, setIsMOdalOpen] = useState(false);
 
-  // функции для хуков
+  // функции для хука
   const openModal = () => setIsMOdalOpen(true);
-  const closeModal = () => setIsMOdalOpen(false);
+
+  // const closeModal = () => setIsMOdalOpen(false);
 
   return (
     <li>
@@ -50,7 +51,8 @@ export const ImageGalleryItem = ({
       <ModalWindow
         largeImageURL={largeImageURL}
         modalStyle={customStyles}
-        closeModal={closeModal}
+        // в closeModal передали анонимную стрелку (второй вариант записи)
+        closeModal={() => setIsMOdalOpen(false)}
         isOpen={isModalOpen}
         user={user}
       />
