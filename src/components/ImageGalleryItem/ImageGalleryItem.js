@@ -1,5 +1,5 @@
-import { Component } from 'react';
 import { ModalWindow } from 'components/Modal/Modal';
+import { useState } from 'react';
 
 // импорт библиотеки для модального окна
 import Modal from 'react-modal';
@@ -14,7 +14,6 @@ const customStyles = {
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
-
   // стили для контента внутри модального окна
   content: {
     top: '50%',
@@ -25,43 +24,36 @@ const customStyles = {
     transform: 'translate(-50%, -50%)',
   },
 };
-
 Modal.setAppElement('#root');
 
-export class ImageGalleryItem extends Component {
-  state = {
-    isModalOpen: false,
-  };
+// функция для хука --> в аргумент передаем двойную деструктуризацию - объекта в объекте
+export const ImageGalleryItem = ({
+  oneImage: { webformatURL, user, largeImageURL },
+}) => {
+  // создаем хук
+  const [isModalOpen, setIsMOdalOpen] = useState(false);
 
-  openModal = () => {
-    this.setState({ isModalOpen: true });
-  };
+  // функции для хуков
+  const openModal = () => setIsMOdalOpen(true);
+  const closeModal = () => setIsMOdalOpen(false);
 
-  closeModal = () => {
-    this.setState({ isModalOpen: false });
-  };
+  return (
+    <li>
+      <img
+        width={400}
+        height={300}
+        src={webformatURL}
+        alt={user}
+        onClick={openModal}
+      />
 
-  render() {
-    const { webformatURL, user, largeImageURL } = this.props.oneImage;
-
-    return (
-      <li>
-        <img
-          width={400}
-          height={300}
-          src={webformatURL}
-          alt={user}
-          onClick={this.openModal}
-        />
-
-        <ModalWindow
-          largeImageURL={largeImageURL}
-          modalStyle={customStyles}
-          closeModal={this.closeModal}
-          isOpen={this.state.isModalOpen}
-          user={user}
-        />
-      </li>
-    );
-  }
-}
+      <ModalWindow
+        largeImageURL={largeImageURL}
+        modalStyle={customStyles}
+        closeModal={closeModal}
+        isOpen={isModalOpen}
+        user={user}
+      />
+    </li>
+  );
+};
