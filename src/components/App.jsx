@@ -86,7 +86,7 @@ export const App = () => {
         // если isLoading: false --> рендерим галерею
         <ImageGallery images={data} />
       )}
-      {/* прячем кнопку LoadMore если массив пустой или загружено максимум фото*/}
+      {/* прячем кнопку LoadMore если массив пустой или загружено максимум фото или происходит Loading*/}
       {data.length === 0 || loadedPhotos === maxPhotos || isLoading ? null : (
         <LoadMoreButton loadMore={newPage} />
       )}
