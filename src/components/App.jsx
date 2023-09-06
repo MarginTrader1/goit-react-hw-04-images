@@ -87,7 +87,7 @@ export const App = () => {
         <ImageGallery images={data} />
       )}
       {/* прячем кнопку LoadMore если массив пустой или загружено максимум фото*/}
-      {data.length === 0 || loadedPhotos === maxPhotos ? null : (
+      {data.length === 0 || loadedPhotos === maxPhotos || isLoading ? null : (
         <LoadMoreButton loadMore={newPage} />
       )}
     </>
