@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery.js/ImageGallery';
 import { LoadMoreButton } from './Button/Button';
@@ -9,106 +9,87 @@ import { fetchImages } from 'API';
 // импорт спиннера как компонента
 import { Hourglass } from 'react-loader-spinner';
 
-export class App extends Component {
-  state = {
-    data: [],
-    searchQuery: '',
-    page: 1,
-    isLoading: false,
-    loadedPhotos: 0,
-    maxPhotos: 0,
-  };
+export const App = () => {
+  const [data, setData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadedPhotos, setLoadedPhotos] = useState(0);
+  const [maxPhotos, setMaxPhotos] = useState(0);
 
   // получаем велью инпута, которое записываем в state
-  getQuery = newQuery => {
+  const getQuery = newQuery => {
     // проверка на пустой запрос
     if (newQuery === '') {
       return alert(`Пустая строка! Введите слово для поиска!`);
     }
     // делаем запрос уникальным по методу ниже и записываем его в state
-    this.setState({
-      searchQuery: `${Date.now()}/${newQuery}`.trim(),
-      data: [],
-      page: 1,
-    });
+    setSearchQuery(`${Date.now()}/${newQuery}`.trim());
+    setData([]);
+    setPage(1);
   };
-
-  // основной запрос на сервер делаем в componentDidUpdate
-  async componentDidUpdate(prevProps, prevState) {
-    // проверка на новые данные
-    if (
-      prevState.searchQuery !== this.state.searchQuery ||
-      prevState.page !== this.state.page
-    ) {
-      // уникальный запрос (строку) обрезаем до стандартного слова
-      const searchQuery = this.state.searchQuery.slice(14);
-
-      // реализация отображения загрузки
-      this.setState({ isLoading: true });
-
-      // запрос на сервер и сразу деструктуризируем объект
-      const { totalHits, hits } = await fetchImages(
-        searchQuery,
-        this.state.page
-      );
-
-      // меняем state
-      this.setState(prevState => {
-        // если page равен 1 -> полностью меняем старый массив на новый массив (для новых запросов)
-        if (prevState.page === 1) {
-          return {
-            data: hits,
-            isLoading: false,
-            loadedPhotos: hits.length,
-            maxPhotos: totalHits,
-          };
-        }
-
-        // если page больше 1 -> создаем массив, в который распыляем старый массив и распыляем новый массив (для кнопки LoadMore)
-        return {
-          data: [...prevState.data, ...hits],
-          isLoading: false,
-          loadedPhotos: prevState.loadedPhotos + hits.length,
-        };
-      });
-    }
-  }
 
   // запрос за следующей страничкой
-  newPage = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
+  const newPage = () => setPage(prevState => prevState + 1);
 
-  render() {
-    // деструктуризируем state перед использованием
-    const { data, isLoading, loadedPhotos, maxPhotos } = this.state;
+  // основной запрос на сервер делаем через useEffect
+  useEffect(() => {
+    //запрет запроса призагрузке страницы
+    if (searchQuery === '') return;
 
-    return (
-      <>
-        <Searchbar getQuery={this.getQuery} />
-        {/* продолжение реализации для отображения загрузки isLoading */}
-        {isLoading ? (
-          // если isLoading: true --> показываем спинер
-          <Hourglass
-            visible={true}
-            height="80"
-            width="80"
-            ariaLabel="hourglass-loading"
-            wrapperStyle={{}}
-            wrapperClass="hourglass-loading"
-            colors={['#306cce', '#72a1ed']}
-          />
-        ) : (
-          // если isLoading: false --> рендерим галерею
-          <ImageGallery images={data} />
-        )}
-        {/* прячем кнопку LoadMore если массив пустой или загружено максимум фото*/}
-        {data.length === 0 || loadedPhotos === maxPhotos ? null : (
-          <LoadMoreButton loadMore={this.newPage} />
-        )}
-      </>
-    );
-  }
-}
+    //создаем ассинхронную функцию getImages (необходимый паттерн для иссинхронных функций в useEffect)
+    async function getImages() {
+      // уникальный запрос (строку) обрезаем до стандартного слова
+      const query = searchQuery.slice(14);
+
+      // реализация отображения загрузки
+      setIsLoading(true);
+
+      // запрос на сервер и сразу деструктуризируем объект
+      const { totalHits, hits } = await fetchImages(query, page);
+
+      // *меняем state*
+      // если page равен 1 -> полностью меняем старый массив на новый массив (для новых запросов)
+      if (page === 1) {
+        setData(hits);
+        setIsLoading(false);
+        setLoadedPhotos(hits.length);
+        setMaxPhotos(totalHits);
+        return;
+      }
+      // если page больше 1 -> создаем массив, в который распыляем старый массив и распыляем новый массив (для кнопки LoadMore)
+
+      setData(prevState => [...prevState, ...hits]);
+      setIsLoading(false);
+      setLoadedPhotos(prevState => prevState + hits.length);
+    }
+    // вызываем ассинхронную функцию getImages (необходимый паттерн для иссинхронных функций в useEffect)
+    getImages();
+  }, [searchQuery, page]);
+
+  return (
+    <>
+      <Searchbar getQuery={getQuery} />
+      {/* продолжение реализации для отображения загрузки isLoading */}
+      {isLoading ? (
+        // если isLoading: true --> показываем спинер
+        <Hourglass
+          visible={true}
+          height="80"
+          width="80"
+          ariaLabel="hourglass-loading"
+          wrapperStyle={{}}
+          wrapperClass="hourglass-loading"
+          colors={['#306cce', '#72a1ed']}
+        />
+      ) : (
+        // если isLoading: false --> рендерим галерею
+        <ImageGallery images={data} />
+      )}
+      {/* прячем кнопку LoadMore если массив пустой или загружено максимум фото*/}
+      {data.length === 0 || loadedPhotos === maxPhotos ? null : (
+        <LoadMoreButton loadMore={newPage} />
+      )}
+    </>
+  );
+};
