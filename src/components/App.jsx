@@ -29,9 +29,6 @@ export const App = () => {
     setPage(1);
   };
 
-  // запрос за следующей страничкой
-  const newPage = () => setPage(prevState => prevState + 1);
-
   // основной запрос на сервер делаем через useEffect
   useEffect(() => {
     //запрет запроса при загрузке страницы
@@ -66,6 +63,9 @@ export const App = () => {
     // вызываем ассинхронную функцию getImages (необходимый паттерн для иссинхронных функций в useEffect)
     getImages();
   }, [searchQuery, page]);
+
+  // запрос за следующей страничкой для кнопки loadMore
+  const newPage = () => setPage(prevState => prevState + 1);
 
   return (
     <>
